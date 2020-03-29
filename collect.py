@@ -3,7 +3,7 @@ import csv
 from tqdm import tqdm
 import json
 
-FILTER_MINIMUM_ACTIVE_NUMBERS = 2000
+FILTER_MINIMUM_ACTIVE_NUMBERS = 5000
 
 class DailyData():
     def __init__(self):
