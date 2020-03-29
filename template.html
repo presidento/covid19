@@ -1,0 +1,38 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>COVID-19</title>
+</head>
+<body>
+    <script src="highcharts.js"></script>
+    <figure class="highcharts-figure">
+        <div id="container"></div>
+    </figure>
+    <script type="text/javascript">
+    Highcharts.chart('container', {
+        title: {
+            text: 'COVID-19'
+        },
+        chart: {
+            height: '50%'
+        },
+        plotOptions: {
+            series: {
+                animation: false
+            },
+            line: {
+                marker: {
+                    enabled: false
+                }
+            }
+        },
+        xAxis: {
+            categories: [/*xAxis*/],
+        },        
+        series: [/*series*/],
+    });
+    </script>
+</body>
+</html>

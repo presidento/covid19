@@ -1,6 +1,7 @@
 import pathlib
 import csv
 from tqdm import tqdm
+import json
 
 FILTER_MINIMUM_ACTIVE_NUMBERS = 2000
 
@@ -96,3 +97,23 @@ with pathlib.Path('report.txt').open('w', encoding='utf-16', newline='') as f:
             data_str = str(data_num).replace('.', ',')
             row.append(data_str)
         writer.writerow(row)
+
+def highcharts_dates():
+    dates = []
+    for date in sorted(all_dates):
+        month, day, year = date.split('-')
+        dates.append(f'{month}.{day}.')
+    return dates
+
+highcharts_series = []
+for country in country_list:
+    serie = {
+        'name': country.full_name,
+        'data': []
+    }
+    for date in sorted(all_dates):
+        serie['data'].append(country.get_data(date).active)
+    highcharts_series.append(serie)
+template_text = pathlib.Path('template.html').read_text()
+html_text = template_text.replace('[/*xAxis*/]', json.dumps(highcharts_dates())).replace('[/*series*/]', json.dumps(highcharts_series))
+pathlib.Path('report.html').write_text(html_text)
