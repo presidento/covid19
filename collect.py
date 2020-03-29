@@ -21,7 +21,7 @@ class Country():
         self.full_name = self.name.strip()
         self.data = {}
         self.country_id = self.full_name
-    
+
     def add_data(self, date, type, value):
         if date not in self.data:
             self.data[date] = DailyData()
@@ -49,6 +49,10 @@ class Country():
         for day_data in self.data.values():
             max_active = max(max_active, day_data.active)
         return max_active
+
+    @property
+    def last_active_count(self):
+        return list(self.data.values())[-1].active
 
 countries = {}
 
@@ -87,6 +91,8 @@ def convert_date(date_str):
 with pathlib.Path('report.txt').open('w', encoding='utf-16', newline='') as f:
     writer = csv.writer(f, dialect='excel-tab')
     country_list = list(country for country in countries.values() if country.max_active > FILTER_MINIMUM_ACTIVE_NUMBERS)
+    country_list = sorted(country_list, key=lambda country: country.last_active_count, reverse=True)
+
     header = ['Date'] + [country.full_name for country in country_list]
     writer.writerow(header)
 
