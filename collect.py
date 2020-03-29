@@ -98,22 +98,29 @@ with pathlib.Path('report.txt').open('w', encoding='utf-16', newline='') as f:
             row.append(data_str)
         writer.writerow(row)
 
-def highcharts_dates():
+def write_highcharts(name, calc_fn):
     dates = []
     for date in sorted(all_dates):
         month, day, year = date.split('-')
         dates.append(f'{month}.{day}.')
-    return dates
 
-highcharts_series = []
-for country in country_list:
-    serie = {
-        'name': country.full_name,
-        'data': []
-    }
-    for date in sorted(all_dates):
-        serie['data'].append(country.get_data(date).active)
-    highcharts_series.append(serie)
-template_text = pathlib.Path('template.html').read_text()
-html_text = template_text.replace('[/*xAxis*/]', json.dumps(highcharts_dates())).replace('[/*series*/]', json.dumps(highcharts_series))
-pathlib.Path('report.html').write_text(html_text)
+    highcharts_series = []
+    for country in country_list:
+        serie = {
+            'name': country.full_name,
+            'data': []
+        }
+        for date in sorted(all_dates):
+                serie['data'].append(calc_fn(country, date))
+        highcharts_series.append(serie)
+
+    template_text = pathlib.Path('template.html').read_text()
+    html_text = template_text.replace('[/*xAxis*/]', json.dumps(dates))
+    html_text = html_text.replace('[/*series*/]', json.dumps(highcharts_series))
+    html_text = html_text.replace('{TITLE}', name)
+    pathlib.Path(f'{name} report.html').write_text(html_text)
+
+
+write_highcharts('deaths', lambda country, date: country.get_data(date).deaths)
+write_highcharts('active', lambda country, date: country.get_data(date).active)
+write_highcharts('normalized', lambda country, date: country.get_data(date).active / country.max_active)
