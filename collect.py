@@ -2,6 +2,7 @@ import pathlib
 import csv
 from tqdm import tqdm
 import json
+import datetime
 
 FILTER_MINIMUM_ACTIVE_NUMBERS = 5000
 
@@ -67,12 +68,17 @@ def get_country(name):
         countries[country_id] = new_country
     return countries[country_id]
 
+def convert_date(date_str):
+    month, day, year = date_str.split('-')
+    date = datetime.date(int(year), int(month), int(day))
+    return date
+
 all_dates = []
 
 time_series_folder = pathlib.Path('.') / 'COVID-19' / 'csse_covid_19_data' / 'csse_covid_19_daily_reports'
 for daily_report_file in tqdm(list(time_series_folder.glob('*.csv')), desc='Load'):
     with daily_report_file.open(newline='', encoding='utf-8-sig') as f:
-        date = daily_report_file.stem
+        date = convert_date(daily_report_file.stem)
         all_dates.append(date)
         reader = csv.DictReader(f)
         for province in reader:
@@ -84,9 +90,7 @@ for daily_report_file in tqdm(list(time_series_folder.glob('*.csv')), desc='Load
             country.add_data(date, 'deaths', province['Deaths'])
             country.add_data(date, 'recovered', province['Recovered'])
 
-def convert_date(date_str):
-    month, day, year = date_str.split('-')
-    return f'{year}-{month}-{day}'
+all_dates = sorted(all_dates)
 
 with pathlib.Path('report.txt').open('w', encoding='utf-16', newline='') as f:
     writer = csv.writer(f, dialect='excel-tab')
@@ -96,8 +100,8 @@ with pathlib.Path('report.txt').open('w', encoding='utf-16', newline='') as f:
     header = ['Date'] + [country.full_name for country in country_list]
     writer.writerow(header)
 
-    for date in sorted(all_dates):
-        row = [convert_date(date)]
+    for date in all_dates:
+        row = [date]
         for country in country_list:
             data_num = country.get_data(date).active
             data_str = str(data_num).replace('.', ',')
@@ -105,10 +109,7 @@ with pathlib.Path('report.txt').open('w', encoding='utf-16', newline='') as f:
         writer.writerow(row)
 
 def write_highcharts(name, calc_fn):
-    dates = []
-    for date in sorted(all_dates):
-        month, day, year = date.split('-')
-        dates.append(f'{month}.{day}.')
+    dates = [date.strftime('%m.%d.') for date in all_dates]
 
     highcharts_series = []
     for country in country_list:
@@ -116,7 +117,7 @@ def write_highcharts(name, calc_fn):
             'name': country.full_name,
             'data': []
         }
-        for date in sorted(all_dates):
+        for date in all_dates:
                 serie['data'].append(calc_fn(country, date))
         highcharts_series.append(serie)
 
