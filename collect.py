@@ -43,6 +43,15 @@ class Country():
         if date in self.data:
             return self.data[date]
         return DailyData()
+    
+    def get_diff(self, date):
+        actual = self.get_data(date)
+        previous = self.get_data(date - datetime.timedelta(days=1))
+        diff_data = DailyData()
+        diff_data.confirmed = actual.confirmed - previous.confirmed
+        diff_data.deaths = actual.deaths - previous.deaths
+        diff_data.recovered = actual.recovered - previous.recovered
+        return diff_data
 
     @property
     def max_active(self):
@@ -131,3 +140,6 @@ def write_highcharts(name, calc_fn):
 write_highcharts('deaths', lambda country, date: country.get_data(date).deaths)
 write_highcharts('active', lambda country, date: country.get_data(date).active)
 write_highcharts('normalized', lambda country, date: country.get_data(date).active / country.max_active)
+write_highcharts('confirmed diff', lambda country, date: country.get_diff(date).confirmed)
+write_highcharts('deaths diff', lambda country, date: country.get_diff(date).deaths)
+write_highcharts('recovered diff', lambda country, date: country.get_diff(date).recovered)
