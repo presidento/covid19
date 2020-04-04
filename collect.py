@@ -117,21 +117,19 @@ with pathlib.Path('report.txt').open('w', encoding='utf-16', newline='') as f:
             row.append(data_str)
         writer.writerow(row)
 
-def write_highcharts(name, calc_fn):
-    dates = [date.strftime('%m.%d.') for date in all_dates]
-
+def write_highcharts(name, calc_fn, dates=all_dates):
     highcharts_series = []
     for country in country_list:
         serie = {
             'name': country.full_name,
             'data': []
         }
-        for date in all_dates:
+        for date in dates:
                 serie['data'].append(calc_fn(country, date))
         highcharts_series.append(serie)
 
     template_text = pathlib.Path('template.html').read_text()
-    html_text = template_text.replace('[/*xAxis*/]', json.dumps(dates))
+    html_text = template_text.replace('[/*xAxis*/]', json.dumps([date.strftime('%m.%d.') for date in dates]))
     html_text = html_text.replace('[/*series*/]', json.dumps(highcharts_series))
     html_text = html_text.replace('{TITLE}', name)
     pathlib.Path(f'{name} report.html').write_text(html_text)
@@ -139,7 +137,9 @@ def write_highcharts(name, calc_fn):
 
 write_highcharts('deaths', lambda country, date: country.get_data(date).deaths)
 write_highcharts('active', lambda country, date: country.get_data(date).active)
-write_highcharts('normalized', lambda country, date: country.get_data(date).active / country.max_active)
+write_highcharts('normalized',
+    lambda country, date: country.get_data(date).active / country.max_active,
+    dates=all_dates[-28:])
 write_highcharts('confirmed diff', lambda country, date: country.get_diff(date).confirmed)
 write_highcharts('deaths diff', lambda country, date: country.get_diff(date).deaths)
 write_highcharts('recovered diff', lambda country, date: country.get_diff(date).recovered)
