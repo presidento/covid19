@@ -46,7 +46,7 @@ class Country():
     
     def get_diff(self, date):
         actual = self.get_data(date)
-        previous = self.get_data(date - datetime.timedelta(days=1))
+        previous = self.get_data(date - datetime.timedelta(days=7))
         diff_data = DailyData()
         diff_data.confirmed = actual.confirmed - previous.confirmed
         diff_data.deaths = actual.deaths - previous.deaths
