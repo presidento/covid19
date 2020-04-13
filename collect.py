@@ -4,7 +4,7 @@ from tqdm import tqdm
 import json
 import datetime
 
-FILTER_MINIMUM_ACTIVE_NUMBERS = 5000
+FILTER_MINIMUM_ACTIVE_NUMBERS = 10000
 
 class DailyData():
     def __init__(self):
