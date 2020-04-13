@@ -125,9 +125,23 @@ def write_highcharts(name, calc_fn, dates=all_dates):
             'data': []
         }
         for date in dates:
-                serie['data'].append(calc_fn(country, date))
+            serie['data'].append(calc_fn(country, date))
         highcharts_series.append(serie)
+    write_report(name, dates, highcharts_series)
 
+def write_country(report_name, calc_fn):
+    dates = all_dates
+    country_name = 'Hungary'
+    country = get_country(country_name)
+    serie = {
+        'name': country.full_name,
+        'data': []
+    }
+    for date in dates:
+        serie['data'].append(calc_fn(country, date))
+    write_report(f'{country_name} {report_name}', dates, [serie])
+
+def write_report(name, dates, highcharts_series):
     template_text = pathlib.Path('template.html').read_text()
     html_text = template_text.replace('[/*xAxis*/]', json.dumps([date.strftime('%m.%d.') for date in dates]))
     html_text = html_text.replace('[/*series*/]', json.dumps(highcharts_series))
@@ -143,3 +157,7 @@ write_highcharts('normalized',
 write_highcharts('confirmed diff', lambda country, date: country.get_diff(date).confirmed)
 write_highcharts('deaths diff', lambda country, date: country.get_diff(date).deaths)
 write_highcharts('recovered diff', lambda country, date: country.get_diff(date).recovered)
+
+write_country('active', lambda country, date: country.get_data(date).active)
+write_country('confirmed diff', lambda country, date: country.get_diff(date).confirmed)
+write_country('deaths diff', lambda country, date: country.get_diff(date).deaths)
