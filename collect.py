@@ -151,9 +151,6 @@ def write_report(name, dates, highcharts_series):
 
 write_highcharts('deaths', lambda country, date: country.get_data(date).deaths)
 write_highcharts('active', lambda country, date: country.get_data(date).active)
-write_highcharts('normalized',
-    lambda country, date: country.get_data(date).active / country.max_active,
-    dates=all_dates[-28:])
 write_highcharts('confirmed diff', lambda country, date: country.get_diff(date).confirmed)
 write_highcharts('deaths diff', lambda country, date: country.get_diff(date).deaths)
 write_highcharts('recovered diff', lambda country, date: country.get_diff(date).recovered)
