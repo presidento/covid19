@@ -4,7 +4,7 @@ from tqdm import tqdm
 import json
 import datetime
 
-FILTER_MINIMUM_ACTIVE_NUMBERS = 10000
+FILTER_MINIMUM_DEATHS = 1000
 
 class DailyData():
     def __init__(self):
@@ -54,15 +54,8 @@ class Country():
         return diff_data
 
     @property
-    def max_active(self):
-        max_active = 0
-        for day_data in self.data.values():
-            max_active = max(max_active, day_data.active)
-        return max_active
-
-    @property
-    def last_active_count(self):
-        return list(self.data.values())[-1].active
+    def deaths(self):
+        return list(self.data.values())[-1].deaths
 
 countries = {}
 
@@ -103,8 +96,8 @@ all_dates = sorted(all_dates)
 
 with pathlib.Path('report.txt').open('w', encoding='utf-16', newline='') as f:
     writer = csv.writer(f, dialect='excel-tab')
-    country_list = list(country for country in countries.values() if country.max_active > FILTER_MINIMUM_ACTIVE_NUMBERS)
-    country_list = sorted(country_list, key=lambda country: country.last_active_count, reverse=True)
+    country_list = list(country for country in countries.values() if country.deaths > FILTER_MINIMUM_DEATHS)
+    country_list = sorted(country_list, key=lambda country: country.deaths, reverse=True)
 
     header = ['Date'] + [country.full_name for country in country_list]
     writer.writerow(header)
