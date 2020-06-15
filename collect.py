@@ -172,9 +172,6 @@ write_highcharts(
     "confirmed diff", lambda country, date: country.get_diff(date).confirmed
 )
 write_highcharts("deaths diff", lambda country, date: country.get_diff(date).deaths)
-write_highcharts(
-    "recovered diff", lambda country, date: country.get_diff(date).recovered
-)
 
 write_country("active", lambda country, date: country.get_data(date).active)
 write_country("confirmed diff", lambda country, date: country.get_diff(date).confirmed)
