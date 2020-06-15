@@ -1,8 +1,9 @@
-import pathlib
 import csv
-from tqdm import tqdm
-import json
 import datetime
+import json
+import pathlib
+
+from tqdm import tqdm
 
 FILTER_MINIMUM_DEATHS = 1000
 
@@ -59,6 +60,15 @@ class Country:
     def deaths(self):
         return list(self.data.values())[-1].deaths
 
+    @property
+    def last_week_deaths(self):
+        last_deaths = list(self.data.values())[-1].deaths
+        try:
+            one_week_deaths = list(self.data.values())[-7].deaths
+        except IndexError:
+            one_week_deaths = 0
+        return last_deaths - one_week_deaths
+
 
 countries = {}
 
@@ -108,9 +118,7 @@ all_dates = sorted(all_dates)
 with pathlib.Path("report.txt").open("w", encoding="utf-16", newline="") as f:
     writer = csv.writer(f, dialect="excel-tab")
     country_list = list(
-        country
-        for country in countries.values()
-        if country.deaths > FILTER_MINIMUM_DEATHS
+        country for country in countries.values() if country.last_week_deaths > 200
     )
     country_list = sorted(
         country_list, key=lambda country: country.deaths, reverse=True
