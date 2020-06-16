@@ -179,6 +179,7 @@ def write_highcharts(name, calculate_ratio, calc_fn):
         serie = {"name": country.full_name, "data": []}
         if country.name == "World":
             serie["yAxis"] = 1
+            serie["dashStyle"] = "ShortDot"
         for date in all_dates:
             value = calc_fn(country, date)
             if calculate_ratio:
