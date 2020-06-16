@@ -169,14 +169,21 @@ with pathlib.Path("report.txt").open("w", encoding="utf-16", newline="") as f:
         writer.writerow(row)
 
 
-def write_highcharts(name, calc_fn, dates=all_dates):
+def write_highcharts(name, calculate_ratio, calc_fn):
     highcharts_series = []
     for country in country_list:
         serie = {"name": country.full_name, "data": []}
-        for date in dates:
-            serie["data"].append(calc_fn(country, date))
+        for date in all_dates:
+            value = calc_fn(country, date)
+            if calculate_ratio:
+                value = value / country.population * 1_000_000
+            serie["data"].append(value)
         highcharts_series.append(serie)
-    write_report(name, dates, highcharts_series)
+    if calculate_ratio:
+        report_name = f"{name} ratio"
+    else:
+        report_name = f"{name} abs"
+    write_report(report_name, all_dates, highcharts_series)
 
 
 def write_country(report_name, calc_fn):
@@ -199,24 +206,13 @@ def write_report(name, dates, highcharts_series):
     pathlib.Path(f"{name} report.html").write_text(html_text)
 
 
-write_highcharts("deaths", lambda country, date: country.get_data(date).deaths)
+write_highcharts("deaths", False, lambda country, date: country.get_data(date).deaths)
+write_highcharts("deaths", True, lambda country, date: country.get_data(date).deaths)
 write_highcharts(
-    "deaths ratio",
-    lambda country, date: country.get_data(date).deaths
-    / country.population
-    * 1_000_000,
+    "confirmed diff", True, lambda country, date: country.get_diff(date).confirmed
 )
 write_highcharts(
-    "confirmed diff ratio",
-    lambda country, date: country.get_diff(date).confirmed
-    / country.population
-    * 1_000_000,
-)
-write_highcharts(
-    "deaths diff ratio",
-    lambda country, date: country.get_diff(date).deaths
-    / country.population
-    * 1_000_000,
+    "deaths diff", True, lambda country, date: country.get_diff(date).deaths
 )
 
 write_country("active", lambda country, date: country.get_data(date).active)
