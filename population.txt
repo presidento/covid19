@@ -1,4 +1,5 @@
 Country	Population
+World	7800000000
 Afghanistan	38884583
 Albania	2877915
 Algeria	43813430

@@ -126,11 +126,15 @@ time_series_folder = (
     / "csse_covid_19_daily_reports"
 )
 for daily_report_file in tqdm(list(time_series_folder.glob("*.csv")), desc="Load"):
+    world = get_country("World")
     with daily_report_file.open(newline="", encoding="utf-8-sig") as f:
         date = convert_date(daily_report_file.stem)
         all_dates.append(date)
         reader = csv.DictReader(f)
         for province in reader:
+            world.add_data(date, "confirmed", province["Confirmed"])
+            world.add_data(date, "deaths", province["Deaths"])
+            world.add_data(date, "recovered", province["Recovered"])
             try:
                 country_region = province["Country/Region"]
             except KeyError:
@@ -173,6 +177,8 @@ def write_highcharts(name, calculate_ratio, calc_fn):
     highcharts_series = []
     for country in country_list:
         serie = {"name": country.full_name, "data": []}
+        if country.name == "World":
+            serie["yAxis"] = 1
         for date in all_dates:
             value = calc_fn(country, date)
             if calculate_ratio:
