@@ -2,12 +2,11 @@ import csv
 import datetime
 import json
 import pathlib
-
 from tqdm import tqdm
 
+OUT_DIR = pathlib.Path(__file__).absolute().parent / "output"
+OUT_DIR.mkdir(exist_ok=True)
 FILTER_MINIMUM_DEATHS = 1000
-
-
 POPULATION = {}
 
 
@@ -148,7 +147,7 @@ for daily_report_file in tqdm(list(time_series_folder.glob("*.csv")), desc="Load
             country.add_data(date, "recovered", province["Recovered"])
 all_dates = sorted(all_dates)
 
-with pathlib.Path("report.txt").open("w", encoding="utf-16", newline="") as f:
+with (OUT_DIR / "report.txt").open("w", encoding="utf-16", newline="") as f:
     writer = csv.writer(f, dialect="excel-tab")
     country_list = []
     for country in countries.values():
@@ -210,7 +209,7 @@ def write_report(name, dates, highcharts_series):
     )
     html_text = html_text.replace("[/*series*/]", json.dumps(highcharts_series))
     html_text = html_text.replace("{TITLE}", name)
-    pathlib.Path(f"{name} report.html").write_text(html_text)
+    (OUT_DIR / f"{name} report.html").write_text(html_text)
 
 
 write_highcharts("deaths", False, lambda country, date: country.get_data(date).deaths)

@@ -1,9 +1,5 @@
 /COVID-19
-/report.txt
-/report.xlsx
-/* report.html
-
-~*.xlsx
+/output
 
 .venv
 .vscode
