@@ -95,11 +95,13 @@ class Countries:
         if name == "Republic of Korea" or name == "Korea, South" or name == "Korea":
             name = "South Korea"
         if name == "Czechia":
-            name = "Chech Republic"
+            name = "Czech Republic"
         if name == "United Kingdom":
             name = "UK"
         if name == "Russian Federation":
             name = "Russia"
+        if name == "Viet Nam":
+            name = "Vietnam"
         if name not in self._countries:
             self._countries[name] = Country(name, self._population[name])
         return self._countries[name]
