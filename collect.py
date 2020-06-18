@@ -5,9 +5,14 @@ import pathlib
 from tqdm import tqdm
 
 OUT_DIR = pathlib.Path(__file__).absolute().parent / "output"
-OUT_DIR.mkdir(exist_ok=True)
-FILTER_MINIMUM_DEATHS = 1000
-POPULATION = {}
+TIME_SERIES_FOLDER = (
+    pathlib.Path(__file__).absolute().parent
+    / "COVID-19"
+    / "csse_covid_19_data"
+    / "csse_covid_19_daily_reports"
+)
+
+########################################################################################
 
 
 class DailyData:
@@ -22,12 +27,10 @@ class DailyData:
 
 
 class Country:
-    def __init__(self, name):
+    def __init__(self, name, population):
         self.name = name
-        self.full_name = self.name
         self.data = {}
-        self.country_id = self.full_name
-        self.population = POPULATION[self.name]
+        self.population = population
 
     def add_data(self, date, type, value):
         if date not in self.data:
@@ -73,29 +76,84 @@ class Country:
         return last_deaths - one_week_deaths
 
 
-countries = {}
+class Countries:
+    def __init__(self):
+        self._countries = {}
+        self._population = {}
+        self.all_dates = []
 
+    def get(self, name):
+        name = name.replace("*", "")
+        name = name.replace("St.", "Saint")
+        name = name.replace("Mainland ", "")
+        name = name.replace(" (Islamic Republic of)", "")
+        name = name.replace("Republic of", "")
+        name = name.strip()
+        if name == "Republic of Korea" or name == "Korea, South" or name == "Korea":
+            name = "South Korea"
+        if name == "Czechia":
+            name = "Chech Republic"
+        if name == "United Kingdom":
+            name = "UK"
+        if name == "Russian Federation":
+            name = "Russia"
+        if name not in self._countries:
+            self._countries[name] = Country(name, self._population[name])
+        return self._countries[name]
 
-def get_country(name):
-    name = name.replace("*", "")
-    name = name.replace("St.", "Saint")
-    name = name.replace("Mainland ", "")
-    name = name.replace(" (Islamic Republic of)", "")
-    name = name.replace("Republic of", "")
-    name = name.strip()
-    if name == "Republic of Korea" or name == "Korea, South" or name == "Korea":
-        name = "South Korea"
-    if name == "Czechia":
-        name = "Chech Republic"
-    if name == "United Kingdom":
-        name = "UK"
-    if name == "Russian Federation":
-        name = "Russia"
-    new_country = Country(name)
-    country_id = new_country.country_id
-    if country_id not in countries:
-        countries[country_id] = new_country
-    return countries[country_id]
+    def filtered_country_list(self):
+        country_list = []
+        for country in self._countries.values():
+            if country.population < 9_000_000:
+                continue
+            if country.last_week_deaths < 200 and country.deaths < 5_000:
+                continue
+            country_list.append(country)
+        country_list = sorted(
+            country_list, key=lambda country: country.deaths, reverse=True
+        )
+        return country_list
+
+    def load_data(self):
+        self._load_population()
+        self._parse_daily_files()
+
+    def _parse_daily_files(self):
+        all_dates = []
+        for daily_report_file in tqdm(
+            list(TIME_SERIES_FOLDER.glob("*.csv")), desc="Load"
+        ):
+            world = self.get("World")
+            with daily_report_file.open(newline="", encoding="utf-8-sig") as f:
+                date = convert_date(daily_report_file.stem)
+                all_dates.append(date)
+                reader = csv.DictReader(f)
+                for province in reader:
+                    world.add_data(date, "confirmed", province["Confirmed"])
+                    world.add_data(date, "deaths", province["Deaths"])
+                    world.add_data(date, "recovered", province["Recovered"])
+                    try:
+                        country_region = province["Country/Region"]
+                    except KeyError:
+                        country_region = province["Country_Region"]
+                    try:
+                        country = self.get(country_region)
+                    except KeyError:
+                        # There is no population found
+                        continue
+                    country.add_data(date, "confirmed", province["Confirmed"])
+                    country.add_data(date, "deaths", province["Deaths"])
+                    country.add_data(date, "recovered", province["Recovered"])
+        self.all_dates = sorted(all_dates)
+
+    def _load_population(self):
+        with open("population.txt") as f:
+            next(f)
+            for line in f:
+                country, _, count = line.strip().partition("\t")
+                if not count:
+                    continue
+                self._population[country] = int(count)
 
 
 def convert_date(date_str):
@@ -104,82 +162,14 @@ def convert_date(date_str):
     return date
 
 
-def load_population():
-    with open("population.txt") as f:
-        next(f)
-        for line in f:
-            country, _, population = line.strip().partition("\t")
-            if not population:
-                continue
-            POPULATION[country] = int(population)
-
-
-load_population()
-
-all_dates = []
-
-time_series_folder = (
-    pathlib.Path(".")
-    / "COVID-19"
-    / "csse_covid_19_data"
-    / "csse_covid_19_daily_reports"
-)
-for daily_report_file in tqdm(list(time_series_folder.glob("*.csv")), desc="Load"):
-    world = get_country("World")
-    with daily_report_file.open(newline="", encoding="utf-8-sig") as f:
-        date = convert_date(daily_report_file.stem)
-        all_dates.append(date)
-        reader = csv.DictReader(f)
-        for province in reader:
-            world.add_data(date, "confirmed", province["Confirmed"])
-            world.add_data(date, "deaths", province["Deaths"])
-            world.add_data(date, "recovered", province["Recovered"])
-            try:
-                country_region = province["Country/Region"]
-            except KeyError:
-                country_region = province["Country_Region"]
-            try:
-                country = get_country(country_region)
-            except KeyError:
-                continue
-            country.add_data(date, "confirmed", province["Confirmed"])
-            country.add_data(date, "deaths", province["Deaths"])
-            country.add_data(date, "recovered", province["Recovered"])
-all_dates = sorted(all_dates)
-
-with (OUT_DIR / "report.txt").open("w", encoding="utf-16", newline="") as f:
-    writer = csv.writer(f, dialect="excel-tab")
-    country_list = []
-    for country in countries.values():
-        if country.population < 10_000_000:
-            continue
-        if country.last_week_deaths < 200 and country.deaths < 5_000:
-            continue
-        country_list.append(country)
-    country_list = sorted(
-        country_list, key=lambda country: country.deaths, reverse=True
-    )
-
-    header = ["Date"] + [country.full_name for country in country_list]
-    writer.writerow(header)
-
-    for date in all_dates:
-        row = [date]
-        for country in country_list:
-            data_num = country.get_data(date).active
-            data_str = str(data_num).replace(".", ",")
-            row.append(data_str)
-        writer.writerow(row)
-
-
 def write_highcharts(name, calculate_ratio, calc_fn):
     highcharts_series = []
-    for country in country_list:
-        serie = {"name": country.full_name, "data": []}
+    for country in COUNTRIES.filtered_country_list():
+        serie = {"name": country.name, "data": []}
         if country.name == "World":
             serie["yAxis"] = 1
             serie["dashStyle"] = "ShortDot"
-        for date in all_dates:
+        for date in COUNTRIES.all_dates:
             value = calc_fn(country, date)
             if calculate_ratio:
                 value = value / country.population * 1_000_000
@@ -189,14 +179,14 @@ def write_highcharts(name, calculate_ratio, calc_fn):
         report_name = f"{name} ratio"
     else:
         report_name = f"{name} abs"
-    write_report(report_name, all_dates, highcharts_series)
+    write_report(report_name, COUNTRIES.all_dates, highcharts_series)
 
 
 def write_country(report_name, calc_fn):
-    dates = all_dates
+    dates = COUNTRIES.all_dates
     country_name = "Hungary"
-    country = get_country(country_name)
-    serie = {"name": country.full_name, "data": []}
+    country = COUNTRIES.get(country_name)
+    serie = {"name": country.name, "data": []}
     for date in dates:
         serie["data"].append(calc_fn(country, date))
     write_report(f"{country_name} {report_name}", dates, [serie])
@@ -211,6 +201,12 @@ def write_report(name, dates, highcharts_series):
     html_text = html_text.replace("{TITLE}", name)
     (OUT_DIR / f"{name} report.html").write_text(html_text)
 
+
+########################################################################################
+
+OUT_DIR.mkdir(exist_ok=True)
+COUNTRIES = Countries()
+COUNTRIES.load_data()
 
 write_highcharts("deaths", False, lambda country, date: country.get_data(date).deaths)
 write_highcharts("deaths", True, lambda country, date: country.get_data(date).deaths)
