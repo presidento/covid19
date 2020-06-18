@@ -74,7 +74,7 @@ class Country:
 
     @property
     def deaths(self):
-        return list(self.data.values())[-1].deaths
+        return max(self.data.values(), key=lambda dd: dd.date).deaths
 
     @property
     def last_week_deaths(self):
