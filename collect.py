@@ -19,7 +19,9 @@ scripthelper.setup_file_logging()
 
 
 class DailyData:
-    def __init__(self):
+    def __init__(self, country, date):
+        self.country = country
+        self.date = date
         self.confirmed = 0
         self.deaths = 0
         self.recovered = 0
@@ -28,6 +30,8 @@ class DailyData:
     def active(self):
         return self.confirmed - self.deaths - self.recovered
 
+    def __str__(self):
+        return f"{str(self.country)} {self.date:%Y-%m-%d} {self.confirmed}/{self.deaths}/{self.recovered}"
 
 class Country:
     def __init__(self, name, population):
@@ -37,7 +41,7 @@ class Country:
 
     def add_data(self, date, type, value):
         if date not in self.data:
-            self.data[date] = DailyData()
+            self.data[date] = DailyData(self, date)
         if value:
             value = int(value)
         else:
@@ -54,16 +58,19 @@ class Country:
     def get_data(self, date):
         if date in self.data:
             return self.data[date]
-        return DailyData()
+        return DailyData(self, date)
 
     def get_diff(self, date):
         actual = self.get_data(date)
         previous = self.get_data(date - datetime.timedelta(days=7))
-        diff_data = DailyData()
+        diff_data = DailyData(self, date)
         diff_data.confirmed = actual.confirmed - previous.confirmed
         diff_data.deaths = actual.deaths - previous.deaths
         diff_data.recovered = actual.recovered - previous.recovered
         return diff_data
+    
+    def __str__(self):
+        return self.name
 
     @property
     def deaths(self):
