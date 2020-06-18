@@ -2,7 +2,7 @@ import csv
 import datetime
 import json
 import pathlib
-from tqdm import tqdm
+import scripthelper
 
 OUT_DIR = pathlib.Path(__file__).absolute().parent / "output"
 TIME_SERIES_FOLDER = (
@@ -11,6 +11,9 @@ TIME_SERIES_FOLDER = (
     / "csse_covid_19_data"
     / "csse_covid_19_daily_reports"
 )
+
+logger, ARGS = scripthelper.bootstrap_args()
+scripthelper.setup_file_logging()
 
 ########################################################################################
 
@@ -119,11 +122,16 @@ class Countries:
         self._parse_daily_files()
 
     def _parse_daily_files(self):
+        logger.verbose("Loading daily data")
         all_dates = []
-        for daily_report_file in tqdm(
-            list(TIME_SERIES_FOLDER.glob("*.csv")), desc="Load"
+        world = self.get("World")
+        skipped_country_regions = set()
+        for daily_report_file in scripthelper.progressbar(
+            list(TIME_SERIES_FOLDER.glob("*.csv")),
+            desc="Load",
+            disable=bool(ARGS.quiet),
         ):
-            world = self.get("World")
+            logger.debug(f"Loading daily data from {daily_report_file.stem}")
             with daily_report_file.open(newline="", encoding="utf-8-sig") as f:
                 date = convert_date(daily_report_file.stem)
                 all_dates.append(date)
@@ -139,7 +147,9 @@ class Countries:
                     try:
                         country = self.get(country_region)
                     except KeyError:
-                        # There is no population found
+                        if country_region not in skipped_country_regions:
+                            skipped_country_regions.add(country_region)
+                            logger.verbose(f"No population for {country_region}")
                         continue
                     country.add_data(date, "confirmed", province["Confirmed"])
                     country.add_data(date, "deaths", province["Deaths"])
@@ -147,6 +157,7 @@ class Countries:
         self.all_dates = sorted(all_dates)
 
     def _load_population(self):
+        logger.verbose('Loading population')
         with open("population.txt") as f:
             next(f)
             for line in f:
@@ -204,10 +215,12 @@ def write_report(name, dates, highcharts_series):
 
 ########################################################################################
 
+logger.info("Create stats for COVID-19")
 OUT_DIR.mkdir(exist_ok=True)
 COUNTRIES = Countries()
 COUNTRIES.load_data()
 
+logger.verbose("Write countries")
 write_highcharts("deaths", False, lambda country, date: country.get_data(date).deaths)
 write_highcharts("deaths", True, lambda country, date: country.get_data(date).deaths)
 write_highcharts(
@@ -217,6 +230,7 @@ write_highcharts(
     "deaths diff", True, lambda country, date: country.get_diff(date).deaths
 )
 
+logger.verbose("Write Hungary")
 write_country("active", lambda country, date: country.get_data(date).active)
 write_country("confirmed diff", lambda country, date: country.get_diff(date).confirmed)
 write_country("deaths diff", lambda country, date: country.get_diff(date).deaths)
