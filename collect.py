@@ -33,6 +33,7 @@ class DailyData:
     def __str__(self):
         return f"{str(self.country)} {self.date:%Y-%m-%d} {self.confirmed}/{self.deaths}/{self.recovered}"
 
+
 class Country:
     def __init__(self, name, population):
         self.name = name
@@ -68,7 +69,7 @@ class Country:
         diff_data.deaths = actual.deaths - previous.deaths
         diff_data.recovered = actual.recovered - previous.recovered
         return diff_data
-    
+
     def __str__(self):
         return self.name
 
@@ -118,8 +119,12 @@ class Countries:
         for country in self._countries.values():
             if country.population < 9_000_000:
                 continue
-            if country.last_week_deaths < 200 and country.deaths < 5_000:
+            if country.last_week_deaths < 250 and country.deaths < 10_000:
                 continue
+            logger.debug(
+                f"Country check: {country.name:20} {country.population:12d} "
+                f"{country.deaths:8d} {country.last_week_deaths:7d}"
+            )
             country_list.append(country)
         country_list = sorted(
             country_list, key=lambda country: country.deaths, reverse=True
@@ -166,7 +171,7 @@ class Countries:
         self.all_dates = sorted(all_dates)
 
     def _load_population(self):
-        logger.verbose('Loading population')
+        logger.verbose("Loading population")
         with open("population.txt") as f:
             next(f)
             for line in f:
