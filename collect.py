@@ -74,17 +74,21 @@ class Country:
         return self.name
 
     @property
+    def _last_daily_data(self):
+        return max(self.data.values(), key=lambda dd: dd.date)
+
+    @property
     def deaths(self):
-        return max(self.data.values(), key=lambda dd: dd.date).deaths
+        return self._last_daily_data.deaths
 
     @property
     def last_week_deaths(self):
-        last_deaths = list(self.data.values())[-1].deaths
         try:
-            one_week_deaths = list(self.data.values())[-7].deaths
-        except IndexError:
+            last_date = self._last_daily_data.date
+            one_week_deaths = self.data[last_date - datetime.timedelta(days=7)].deaths
+        except KeyError:
             one_week_deaths = 0
-        return last_deaths - one_week_deaths
+        return self.deaths - one_week_deaths
 
 
 class Countries:
