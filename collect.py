@@ -33,6 +33,11 @@ class DailyData:
     def __str__(self):
         return f"{str(self.country)} {self.date:%Y-%m-%d} {self.confirmed}/{self.deaths}/{self.recovered}"
 
+    @property
+    def mortality(self):
+        if not self.confirmed:
+            return 0
+        return self.deaths / self.confirmed
 
 class Country:
     def __init__(self, name, population):
@@ -212,9 +217,8 @@ def write_highcharts(name, calculate_ratio, calc_fn):
     write_report(report_name, COUNTRIES.all_dates, highcharts_series)
 
 
-def write_country(report_name, calc_fn):
+def write_country(country_name, report_name, calc_fn):
     dates = COUNTRIES.all_dates
-    country_name = "Hungary"
     country = COUNTRIES.get(country_name)
     serie = {"name": country.name, "data": []}
     for date in dates:
@@ -249,7 +253,7 @@ write_highcharts(
     "deaths diff", True, lambda country, date: country.get_diff(date).deaths
 )
 
-logger.verbose("Write Hungary")
-write_country("active", lambda country, date: country.get_data(date).active)
-write_country("confirmed diff", lambda country, date: country.get_diff(date).confirmed)
-write_country("deaths diff", lambda country, date: country.get_diff(date).deaths)
+logger.verbose("Write individual countries")
+write_country("Hungary", "confirmed diff", lambda country, date: country.get_diff(date).confirmed)
+write_country("Hungary", "deaths diff", lambda country, date: country.get_diff(date).deaths)
+write_country("World", "mortality", lambda country, date: country.get_diff(date).mortality)
