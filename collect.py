@@ -235,7 +235,7 @@ def _write_report(countries, name, calculate_ratio, calc_fn):
             value = calc_fn(country, date)
             if calculate_ratio:
                 value = value / country.population * 1_000_000
-                value = min(1500, value)  # Exceptionally high values
+                value = min(1700, value)  # Exceptionally high values
             serie["data"].append(value)
         highcharts_series.append(serie)
     if calculate_ratio:
