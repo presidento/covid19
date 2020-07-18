@@ -7,5 +7,6 @@ cd COVID-19
 git pull --ff-only --quiet
 cd ..
 
+rm -rf output/
 .venv/bin/python3 -m pip install -r requirements.txt --quiet
 .venv/bin/python3 collect.py --quiet
