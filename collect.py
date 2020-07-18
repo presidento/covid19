@@ -129,7 +129,7 @@ class Countries:
         for country in self._countries.values():
             if country.population < 9_000_000:
                 continue
-            if country.last_week_deaths < 250 and country.deaths < 10_000:
+            if country.last_week_deaths < 400 and country.deaths < 10_000:
                 continue
             logger.debug(
                 f"Country check: {country.name:20} {country.population:12d} "
