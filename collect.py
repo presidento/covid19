@@ -39,6 +39,7 @@ class DailyData:
             return 0
         return self.deaths / self.confirmed
 
+
 class Country:
     def __init__(self, name, population):
         self.name = name
@@ -197,8 +198,35 @@ def convert_date(date_str):
 
 
 def write_highcharts(name, calculate_ratio, calc_fn):
+    countries = COUNTRIES.filtered_country_list()
+    _write_report(countries, name, calculate_ratio, calc_fn)
+
+
+def write_central_eu(name, calculate_ratio, calc_fn):
+    selected_countries = (
+        "Hungary",
+        "Austria",
+        "Bosnia and Herzegovina",
+        "Croatia",
+        "Czech Republic",
+        "Romania",
+        "Serbia",
+        "Slovakia",
+        "Slovenia",
+        "Ukraine",
+    )
+    countries = [COUNTRIES.get(name) for name in selected_countries]
+    _write_report(countries, f"Central EU {name}", calculate_ratio, calc_fn)
+
+
+def write_country(country_name, report_name, calc_fn):
+    countries = [COUNTRIES.get(country_name)]
+    _write_report(countries, f"{country_name} {report_name}", False, calc_fn)
+
+
+def _write_report(countries, name, calculate_ratio, calc_fn):
     highcharts_series = []
-    for country in COUNTRIES.filtered_country_list():
+    for country in countries:
         serie = {"name": country.name, "data": []}
         if country.name == "World":
             serie["yAxis"] = 1
@@ -214,26 +242,14 @@ def write_highcharts(name, calculate_ratio, calc_fn):
         report_name = f"{name} ratio"
     else:
         report_name = f"{name} abs"
-    write_report(report_name, COUNTRIES.all_dates, highcharts_series)
-
-
-def write_country(country_name, report_name, calc_fn):
     dates = COUNTRIES.all_dates
-    country = COUNTRIES.get(country_name)
-    serie = {"name": country.name, "data": []}
-    for date in dates:
-        serie["data"].append(calc_fn(country, date))
-    write_report(f"{country_name} {report_name}", dates, [serie])
-
-
-def write_report(name, dates, highcharts_series):
     template_text = pathlib.Path("template.html").read_text()
     html_text = template_text.replace(
         "[/*xAxis*/]", json.dumps([date.strftime("%m.%d.") for date in dates])
     )
     html_text = html_text.replace("[/*series*/]", json.dumps(highcharts_series))
-    html_text = html_text.replace("{TITLE}", name)
-    (OUT_DIR / f"{name} report.html").write_text(html_text)
+    html_text = html_text.replace("{TITLE}", report_name)
+    (OUT_DIR / f"{report_name} report.html").write_text(html_text)
 
 
 ########################################################################################
@@ -243,9 +259,12 @@ OUT_DIR.mkdir(exist_ok=True)
 COUNTRIES = Countries()
 COUNTRIES.load_data()
 
-logger.verbose("Write countries")
+logger.verbose("Write global")
 write_highcharts("deaths", False, lambda country, date: country.get_data(date).deaths)
 write_highcharts("deaths", True, lambda country, date: country.get_data(date).deaths)
+write_highcharts(
+    "confirmed", True, lambda country, date: country.get_data(date).confirmed
+)
 write_highcharts(
     "confirmed diff", True, lambda country, date: country.get_diff(date).confirmed
 )
@@ -253,7 +272,24 @@ write_highcharts(
     "deaths diff", True, lambda country, date: country.get_diff(date).deaths
 )
 
-logger.verbose("Write individual countries")
-write_country("Hungary", "confirmed diff", lambda country, date: country.get_diff(date).confirmed)
-write_country("Hungary", "deaths diff", lambda country, date: country.get_diff(date).deaths)
-write_country("World", "mortality", lambda country, date: country.get_diff(date).mortality)
+logger.verbose("Write World")
+write_country(
+    "World", "mortality", lambda country, date: country.get_data(date).mortality
+)
+write_country(
+    "World", "mortality diff", lambda country, date: country.get_diff(date).mortality
+)
+
+logger.verbose("Write Central EU")
+write_central_eu("deaths", False, lambda country, date: country.get_data(date).deaths)
+write_central_eu("deaths", True, lambda country, date: country.get_data(date).deaths)
+write_central_eu(
+    "confirmed", False, lambda country, date: country.get_data(date).confirmed
+)
+write_central_eu(
+    "confirmed diff", True, lambda country, date: country.get_diff(date).confirmed
+)
+write_central_eu(
+    "deaths diff", True, lambda country, date: country.get_diff(date).deaths
+)
+
