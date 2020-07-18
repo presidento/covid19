@@ -199,7 +199,7 @@ def convert_date(date_str):
 
 def write_highcharts(name, calculate_ratio, calc_fn):
     countries = COUNTRIES.filtered_country_list()
-    _write_report(countries, name, calculate_ratio, calc_fn)
+    _write_report(countries, f"Global {name}", calculate_ratio, calc_fn)
 
 
 def write_central_eu(name, calculate_ratio, calc_fn):
