@@ -231,12 +231,20 @@ def _write_report(countries, name, calculate_ratio, calc_fn):
         if country.name == "World":
             serie["yAxis"] = 1
             serie["dashStyle"] = "ShortDot"
+        previous_value = 0
         for date in COUNTRIES.all_dates:
             value = calc_fn(country, date)
             if calculate_ratio:
                 value = value / country.population * 1_000_000
                 value = min(1700, value)  # Exceptionally high values
+
+            change_ratio = 0.4
+            value = (
+                change_ratio * value
+                + (1 - change_ratio) * previous_value
+            )
             serie["data"].append(value)
+            previous_value = value
         highcharts_series.append(serie)
     if calculate_ratio:
         report_name = f"{name} ratio"
