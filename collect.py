@@ -248,6 +248,8 @@ def _write_report(countries, name, calculate_ratio, calc_fn):
         highcharts_series.append(serie)
     if calculate_ratio:
         report_name = f"{name} ratio"
+    elif "percent" in name:
+        report_name = name
     else:
         report_name = f"{name} abs"
     dates = COUNTRIES.all_dates
@@ -271,7 +273,7 @@ logger.verbose("Write global")
 write_highcharts("deaths", False, lambda country, date: country.get_data(date).deaths)
 write_highcharts("deaths", True, lambda country, date: country.get_data(date).deaths)
 write_highcharts(
-    "confirmed", True, lambda country, date: country.get_data(date).confirmed
+    "confirmed percent", False, lambda country, date: country.get_data(date).confirmed / country.population * 100
 )
 write_highcharts(
     "confirmed diff", True, lambda country, date: country.get_diff(date).confirmed
@@ -293,6 +295,9 @@ write_central_eu("deaths", False, lambda country, date: country.get_data(date).d
 write_central_eu("deaths", True, lambda country, date: country.get_data(date).deaths)
 write_central_eu(
     "confirmed", False, lambda country, date: country.get_data(date).confirmed
+)
+write_central_eu(
+    "confirmed percent", False, lambda country, date: country.get_data(date).confirmed / country.population * 100
 )
 write_central_eu(
     "confirmed diff", True, lambda country, date: country.get_diff(date).confirmed
