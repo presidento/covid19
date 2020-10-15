@@ -1,25 +1,26 @@
 $ErrorActionPreference = "Stop"
-function Run-Command {
+function Invoke-Command {
     param ([scriptblock]$ScriptBlock)
     & @ScriptBlock
     if ($lastexitcode -ne 0) {
-        write-host "ERROR happened, exiting..."
+        Write-Host "ERROR happened, exiting..."
         exit $lastexitcode
     }
 }
 
-write-host "Update code repository"
-Run-Command { git pull --ff-only }
-Run-Command { .venv\Scripts\python -m pip install -r requirements.txt -q }
+Write-Host "Update code repository"
+Invoke-Command { git pull --ff-only }
+Write-Host "Ensure dependencies"
+Invoke-Command { .venv\Scripts\python -m pip install -r requirements.txt -q }
 
-write-host "Update Datase from GitHub"
-Run-Command { 
-    cd COVID-19
+Write-Host "Update Datase from GitHub"
+Invoke-Command { 
+    Set-Location COVID-19
     git pull --ff-only
-    cd ..
+    Set-Location ..
 }
 
-write-host "Collect report"
-Run-Command { .venv\Scripts\python collect.py }
+Write-Host "Collect report"
+Invoke-Command { .venv\Scripts\python collect.py }
 
-write-host "Done"
+Write-Host "Done"
