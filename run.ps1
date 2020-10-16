@@ -11,6 +11,7 @@ function Invoke-Command {
 Write-Host "Update code repository"
 Invoke-Command { git pull --ff-only }
 Write-Host "Ensure dependencies"
+Invoke-Command { .venv\Scripts\python -m pip install --upgrade pip }
 Invoke-Command { .venv\Scripts\python -m pip install -r requirements.txt -q }
 
 Write-Host "Update Datase from GitHub"
