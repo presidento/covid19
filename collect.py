@@ -236,7 +236,7 @@ def _write_report(countries, name, calculate_ratio, calc_fn):
             value = calc_fn(country, date)
             if calculate_ratio:
                 value = value / country.population * 1_000_000
-                value = min(2000, value)  # Exceptionally high values
+                value = min(3000, value)  # Exceptionally high values
 
             change_ratio = 0.4
             value = (
