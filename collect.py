@@ -50,7 +50,7 @@ class Country:
         if date not in self.data:
             self.data[date] = DailyData(self, date)
         if value:
-            value = int(value)
+            value = int(float(value))
         else:
             value = 0
         if type == "confirmed":
