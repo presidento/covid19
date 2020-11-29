@@ -8,6 +8,11 @@ function Invoke-Command {
     }
 }
 
+If (-not (Test-Path ".venv")) {
+    Write-Host "VirtualEnv is missing -> run bootstrap"
+    .\bootstrap.ps1
+}
+
 Write-Host "Update code repository"
 Invoke-Command { git pull --ff-only }
 Write-Host "Ensure dependencies"
