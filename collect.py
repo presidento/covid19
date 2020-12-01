@@ -32,6 +32,9 @@ class DailyData:
 
     def __str__(self):
         return f"{str(self.country)} {self.date:%Y-%m-%d} {self.confirmed}/{self.deaths}/{self.recovered}"
+    
+    def __repr__(self):
+        return f"DailyData({self})"
 
     @property
     def mortality(self):
@@ -78,6 +81,9 @@ class Country:
 
     def __str__(self):
         return self.name
+
+    def __repr__(self):
+        return f"Country({self})"
 
     @property
     def _last_daily_data(self):
