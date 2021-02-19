@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -e
-git fetch --quiet
+git fetch --quiet >/dev/null 2>/dev/null
 git reset --hard origin/master --quiet
 
 cd COVID-19
-git pull --ff-only --quiet
+git pull --ff-only --quiet >/dev/null 2>/dev/null
 cd ..
 
 rm -rf output/
