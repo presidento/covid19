@@ -242,7 +242,7 @@ def _write_report(countries, name, calculate_ratio, calc_fn):
             value = calc_fn(country, date)
             if calculate_ratio:
                 value = value / country.population * 1_000_000
-                value = min(8000, value)  # Exceptionally high values
+                value = min(16000, value)  # Exceptionally high values
 
             change_ratio = 0.4
             value = (
@@ -290,10 +290,10 @@ write_highcharts(
 
 logger.verbose("Write World")
 write_country(
-    "World", "mortality", lambda country, date: country.get_data(date).mortality
+    "World", "mortality", lambda country, date: country.get_data(date).mortality * 100
 )
 write_country(
-    "World", "mortality diff", lambda country, date: country.get_diff(date).mortality
+    "World", "mortality diff", lambda country, date: country.get_diff(date).mortality * 100
 )
 
 logger.verbose("Write Central EU")
