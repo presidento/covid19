@@ -135,7 +135,7 @@ class Countries:
         for country in self._countries.values():
             if country.population < 9_000_000:
                 continue
-            if country.last_week_deaths < 400 and country.deaths < 10_000:
+            if country.last_week_deaths < 400 and country.deaths < 40_000:
                 continue
             logger.debug(
                 f"Country check: {country.name:20} {country.population:12d} "
@@ -242,7 +242,7 @@ def _write_report(countries, name, calculate_ratio, calc_fn):
             value = calc_fn(country, date)
             if calculate_ratio:
                 value = value / country.population * 1_000_000
-                value = min(20000, value)  # Exceptionally high values
+                value = min(30000, value)  # Exceptionally high values
 
             change_ratio = 0.4
             value = (
