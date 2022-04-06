@@ -27,12 +27,24 @@ class DailyData:
         self.recovered = 0
 
     @property
+    def confirmed_ratio(self):
+        value = self.confirmed / self.country.population * 1_000_000
+        value = min(30_000, value)  # Exceptionally high values
+        return value
+
+    @property
+    def deaths_ratio(self):
+        value = self.deaths / self.country.population * 1_000_000
+        value = min(250, value)  # Exceptionally high values
+        return value
+
+    @property
     def active(self):
         return self.confirmed - self.deaths - self.recovered
 
     def __str__(self):
         return f"{str(self.country)} {self.date:%Y-%m-%d} {self.confirmed}/{self.deaths}/{self.recovered}"
-    
+
     def __repr__(self):
         return f"DailyData({self})"
 
@@ -203,12 +215,12 @@ def convert_date(date_str):
     return date
 
 
-def write_highcharts(name, calculate_ratio, calc_fn):
+def write_highcharts(name, calc_fn):
     countries = COUNTRIES.filtered_country_list()
-    _write_report(countries, f"Global {name}", calculate_ratio, calc_fn)
+    _write_report(countries, f"Global {name}", calc_fn)
 
 
-def write_central_eu(name, calculate_ratio, calc_fn):
+def write_central_eu(name, calc_fn):
     selected_countries = (
         "Hungary",
         "Austria",
@@ -222,15 +234,15 @@ def write_central_eu(name, calculate_ratio, calc_fn):
         "Ukraine",
     )
     countries = [COUNTRIES.get(name) for name in selected_countries]
-    _write_report(countries, f"Central EU {name}", calculate_ratio, calc_fn)
+    _write_report(countries, f"Central EU {name}", calc_fn)
 
 
 def write_country(country_name, report_name, calc_fn):
     countries = [COUNTRIES.get(country_name)]
-    _write_report(countries, f"{country_name} {report_name}", False, calc_fn)
+    _write_report(countries, f"{country_name} {report_name}", calc_fn)
 
 
-def _write_report(countries, name, calculate_ratio, calc_fn):
+def _write_report(countries, name, calc_fn):
     highcharts_series = []
     for country in countries:
         serie = {"name": country.name, "data": []}
@@ -240,32 +252,20 @@ def _write_report(countries, name, calculate_ratio, calc_fn):
         previous_value = 0
         for date in COUNTRIES.all_dates:
             value = calc_fn(country, date)
-            if calculate_ratio:
-                value = value / country.population * 1_000_000
-                value = min(30000, value)  # Exceptionally high values
 
             change_ratio = 0.4
-            value = (
-                change_ratio * value
-                + (1 - change_ratio) * previous_value
-            )
+            value = change_ratio * value + (1 - change_ratio) * previous_value
             serie["data"].append(value)
             previous_value = value
         highcharts_series.append(serie)
-    if calculate_ratio:
-        report_name = f"{name} ratio"
-    elif "percent" in name:
-        report_name = name
-    else:
-        report_name = f"{name} abs"
     dates = COUNTRIES.all_dates
     template_text = pathlib.Path("template.html").read_text()
     html_text = template_text.replace(
         "[/*xAxis*/]", json.dumps([date.strftime("%m.%d.") for date in dates])
     )
     html_text = html_text.replace("[/*series*/]", json.dumps(highcharts_series))
-    html_text = html_text.replace("{TITLE}", report_name)
-    (OUT_DIR / f"{report_name} report.html").write_text(html_text)
+    html_text = html_text.replace("{TITLE}", name)
+    (OUT_DIR / f"{name} report.html").write_text(html_text)
 
 
 ########################################################################################
@@ -276,16 +276,17 @@ COUNTRIES = Countries()
 COUNTRIES.load_data()
 
 logger.verbose("Write global")
-write_highcharts("deaths", False, lambda country, date: country.get_data(date).deaths)
-write_highcharts("deaths", True, lambda country, date: country.get_data(date).deaths)
+write_highcharts("deaths", lambda country, date: country.get_data(date).deaths)
+write_highcharts("deaths percent", lambda country, date: country.get_data(date).deaths / country.population * 100)
 write_highcharts(
-    "confirmed percent", False, lambda country, date: country.get_data(date).confirmed / country.population * 100
+    "confirmed percent",
+    lambda country, date: country.get_data(date).confirmed / country.population * 100,
 )
 write_highcharts(
-    "confirmed diff", True, lambda country, date: country.get_diff(date).confirmed
+    "confirmed diff ratio", lambda country, date: country.get_diff(date).confirmed_ratio
 )
 write_highcharts(
-    "deaths diff", True, lambda country, date: country.get_diff(date).deaths
+    "deaths diff ratio", lambda country, date: country.get_diff(date).deaths_ratio
 )
 
 logger.verbose("Write World")
@@ -293,22 +294,22 @@ write_country(
     "World", "mortality", lambda country, date: country.get_data(date).mortality * 100
 )
 write_country(
-    "World", "mortality diff", lambda country, date: country.get_diff(date).mortality * 100
+    "World",
+    "mortality diff",
+    lambda country, date: country.get_diff(date).mortality * 100,
 )
 
 logger.verbose("Write Central EU")
-write_central_eu("deaths", False, lambda country, date: country.get_data(date).deaths)
-write_central_eu("deaths", True, lambda country, date: country.get_data(date).deaths)
+write_central_eu("deaths", lambda country, date: country.get_data(date).deaths)
+write_central_eu("deaths percent", lambda country, date: country.get_data(date).deaths / country.population * 100)
+write_central_eu("confirmed", lambda country, date: country.get_data(date).confirmed)
 write_central_eu(
-    "confirmed", False, lambda country, date: country.get_data(date).confirmed
+    "confirmed percent",
+    lambda country, date: country.get_data(date).confirmed / country.population * 100,
 )
 write_central_eu(
-    "confirmed percent", False, lambda country, date: country.get_data(date).confirmed / country.population * 100
+    "confirmed diff ratio", lambda country, date: country.get_diff(date).confirmed_ratio
 )
 write_central_eu(
-    "confirmed diff", True, lambda country, date: country.get_diff(date).confirmed
+    "deaths diff ratio", lambda country, date: country.get_diff(date).deaths_ratio
 )
-write_central_eu(
-    "deaths diff", True, lambda country, date: country.get_diff(date).deaths
-)
-
