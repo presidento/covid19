@@ -1,4 +1,3 @@
 scripthelper
 black
 pylint
-pip-tools
