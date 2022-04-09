@@ -25,5 +25,9 @@ update-data:
 generate *ARGS:
     {{ python }} collect.py {{ ARGS }}
 
+clean:
+    rm -rf output
+    mkdir output
+
 # Run everything from scratch to full build
 run: bootstrap update-data generate
