@@ -18,7 +18,8 @@ upgrade-deps: && bootstrap
 
 # Update data repository
 update-data:
-    git -C COVID-19 pull --ff-only
+    git -C COVID-19 fetch
+    git -C COVID-19 reset --hard origin/master
 
 # Generate reports
 generate *ARGS:
