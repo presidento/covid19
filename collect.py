@@ -29,13 +29,13 @@ class DailyData:
     @property
     def confirmed_ratio(self):
         value = self.confirmed / self.country.population * 1_000_000
-        value = min(30_000, value)  # Exceptionally high values
+        value = min(20_000, value)  # Exceptionally high values
         return value
 
     @property
     def deaths_ratio(self):
         value = self.deaths / self.country.population * 1_000_000
-        value = min(250, value)  # Exceptionally high values
+        value = min(200, value)  # Exceptionally high values
         return value
 
     @property
