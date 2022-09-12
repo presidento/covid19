@@ -171,7 +171,6 @@ class Countries:
         for daily_report_file in scripthelper.progressbar(
             list(TIME_SERIES_FOLDER.glob("*.csv")),
             desc="Load",
-            disable=bool(ARGS.quiet),
         ):
             logger.debug(f"Loading daily data from {daily_report_file.stem}")
             with daily_report_file.open(newline="", encoding="utf-8-sig") as f:
