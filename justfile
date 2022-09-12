@@ -14,7 +14,7 @@ bootstrap:
 # Upgrade Python dependencies
 upgrade-deps: && bootstrap
     {{ python }} -m pip install pip pip-tools wheel --upgrade
-    {{ python_dir }}/pip-compile --output-file=requirements.txt requirements.in --upgrade --annotation-style line
+    {{ python_dir }}/pip-compile.exe --output-file=requirements.txt requirements.in --upgrade --annotation-style line
 
 # Update data repository
 update-data:
